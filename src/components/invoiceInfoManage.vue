@@ -74,7 +74,7 @@
         <el-table-column prop="remark" label="备注" width="150px"></el-table-column>
 
         <el-table-column label="操作" width="150px" fixed="right">
-          <template scope="scope">
+          <template slot-scope="scope">
             <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="danger" size="small" @click="handleDel(scope.row.invoiceId)">删除</el-button>
           </template>
@@ -84,18 +84,13 @@
 
     <!--工具条-->
     <el-col :span="24" class="toolbar">
-      <el-pagination
-        layout="prev, pager, next"
-        @current-change="pageChange"
-        style="float:right;"
-        :page-size="invoiceInfoSearchReq.pageSize"
-        :total="total"
-      >
+      <el-pagination layout="prev, pager, next" @current-change="pageChange" style="float:right;"
+                     :page-size="invoiceInfoSearchReq.pageSize" :total="total">
       </el-pagination>
     </el-col>
 
     <el-dialog title="新增" :visible.sync="addInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="addInvoiceInfoForm" label-width="100px" :rules="addInvoiceInfoFormRules"
+      <el-form :model="addInvoiceInfoForm" label-width="120px" :rules="addInvoiceInfoFormRules"
                ref="addInvoiceInfoForm">
         <el-form-item label="合同" prop="contractId">
           <el-select v-model="addInvoiceInfoForm.contractId" filterable placeholder="请选择"
@@ -133,15 +128,18 @@
                     show-word-limit></el-input>
         </el-form-item>
 
-        <el-form-item v-for="(invoiceDetail, index) in addInvoiceInfoForm.invoiceDetailInfoList"
-                      :key="invoiceDetail.key"
-                      :label="invoiceDetail.subContractorName"
-                      :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
-                      :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <el-row :span="24">
+          <el-col :span="12" v-for="(invoiceDetail, index) in addInvoiceInfoForm.invoiceDetailInfoList"
+                  :key="invoiceDetail.key">
+            <el-form-item :label="invoiceDetail.subContractorName"
+                          :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
+                          :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
+              <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
+                <template slot="append">%</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -151,7 +149,7 @@
     </el-dialog>
 
     <el-dialog title="修改" :visible.sync="editInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="editInvoiceInfoForm" label-width="80px" :rules="addInvoiceInfoFormRules"
+      <el-form :model="editInvoiceInfoForm" label-width="120px" :rules="addInvoiceInfoFormRules"
                ref="editInvoiceInfoForm">
         <el-form-item label="合同" prop="contractId">
           <el-select v-model="editInvoiceInfoForm.contractId" filterable placeholder="请选择"
@@ -189,15 +187,18 @@
                     show-word-limit></el-input>
         </el-form-item>
 
-        <el-form-item v-for="(invoiceDetail, index) in editInvoiceInfoForm.invoiceDetailInfoList"
-                      :key="invoiceDetail.key"
-                      :label="invoiceDetail.subContractorName"
-                      :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
-                      :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <el-row :span="24">
+          <el-col :span="12" v-for="(invoiceDetail, index) in editInvoiceInfoForm.invoiceDetailInfoList"
+                  :key="invoiceDetail.key">
+            <el-form-item :label="invoiceDetail.subContractorName"
+                          :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
+                          :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
+              <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
+                <template slot="append">%</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -390,6 +391,7 @@
         this.editInvoiceInfoForm.taxRate = 0
         this.editInvoiceInfoForm.invoiceDetailInfoList = []
         this.editInvoiceInfoForm = this.deepCopy(invoiceInfo)
+        console.info(this.editInvoiceInfoForm.invoiceDetailInfoList);
       },
       handleDel: function (invoiceId) {
         if (!confirm('确认删除?')) {

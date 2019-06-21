@@ -102,7 +102,7 @@
         </el-table-column>
 
         <el-table-column label="操作" fixed="right" width="160px">
-          <template scope="scope">
+          <template slot-scope="scope">
             <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="danger" size="small" @click="handleDel(scope.row.payId)">删除</el-button>
           </template>
@@ -164,13 +164,18 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item v-for="(payDetail, index) in addPayInfoForm.payDetailInfoList" :key="payDetail.key"
-                      :label="payDetail.subContractorName" :prop="'payDetailInfoList.' + index + '.shareRate'"
-                      :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <el-row :span="24">
+          <el-col :span="12" v-for="(payDetail, index) in addPayInfoForm.payDetailInfoList"
+                  :key="payDetail.payDetailId">
+            <el-form-item :label="payDetail.subContractorName"
+                          :prop="'payDetailInfoList.' + index + '.shareRate'"
+                          :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
+              <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
+                <template slot="append">%</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -225,14 +230,18 @@
                     maxlength="30" show-word-limit></el-input>
         </el-form-item>
 
-        <el-form-item v-for="(payDetail, index) in editPayInfoForm.payDetailInfoList"
-                      :key="payDetail.key" :label="payDetail.subContractorName"
-                      :prop="'payDetailInfoList.' + index + '.shareRate'"
-                      :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <el-row :span="24">
+          <el-col :span="12" v-for="(payDetail, index) in editPayInfoForm.payDetailInfoList"
+                  :key="payDetail.payDetailId">
+            <el-form-item :label="payDetail.subContractorName"
+                          :prop="'payDetailInfoList.' + index + '.shareRate'"
+                          :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
+              <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
+                <template slot="append">%</template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click.native="editPayInfoFormVisible = false">取消</el-button>
