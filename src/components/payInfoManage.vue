@@ -2,55 +2,69 @@
   <section class="main_inner">
     <!--工具条-->
     <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
-      <el-form :inline="true" style="float: left;">
-        <el-form-item :span="10">
-          <el-input placeholder="合同号" v-model="payInfoSearchReq.contractNum" clearable></el-input>
-        </el-form-item>
+      <el-form :inline="true">
+        <el-col :span="4">
+          <el-form-item>
+            <el-input placeholder="合同号" v-model="payInfoSearchReq.contractNum" clearable></el-input>
+          </el-form-item>
+        </el-col>
 
-        <el-form-item>
-          <el-input placeholder="收款单位" v-model="payInfoSearchReq.payee" clearable></el-input>
-        </el-form-item>
+        <el-col :span="4">
+          <el-form-item>
+            <el-input placeholder="收款单位" v-model="payInfoSearchReq.payee" clearable></el-input>
+          </el-form-item>
+        </el-col>
 
-        <el-form-item>
-          <el-select v-model="payInfoSearchReq.subContractorId" placeholder="请选择分包" clearable>
-            <el-option v-for="item in subContractorList"
-                       :key="item.subContractorId"
-                       :label="item.subContractorName"
-                       :value="item.subContractorId">
-            </el-option>
-          </el-select>
-        </el-form-item>
+        <el-col :span="3">
+          <el-form-item>
+            <el-select v-model="payInfoSearchReq.subContractorId" placeholder="请选择分包" clearable>
+              <el-option v-for="item in subContractorList"
+                         :key="item.subContractorId"
+                         :label="item.subContractorName"
+                         :value="item.subContractorId">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
 
-        <el-form-item>
-          <el-select v-model="payInfoSearchReq.payType" filterable placeholder="请选择" clearable>
-            <el-option key="SUB_CONTRACTOR" label="分包" value="SUB_CONTRACTOR"></el-option>
-            <el-option key="MIGRANT_WORKER" label="农民工" value="MIGRANT_WORKER"></el-option>
-          </el-select>
-        </el-form-item>
+        <el-col :span="3">
+          <el-form-item>
+            <el-select v-model="payInfoSearchReq.payType" filterable placeholder="请选择" clearable>
+              <el-option key="SUB_CONTRACTOR" label="分包" value="SUB_CONTRACTOR"></el-option>
+              <el-option key="MIGRANT_WORKER" label="农民工" value="MIGRANT_WORKER"></el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
 
-        <el-form-item>
-          <el-date-picker type="date" v-model="payInfoSearchReq.payStartTime" placeholder="付款开始日期" width="150">
-          </el-date-picker>
-        </el-form-item>
+        <el-col :span="7">
+          <el-form-item>
+            <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payStartTime"
+                            placeholder="付款开始日期">
+            </el-date-picker>
+          </el-form-item>
 
-        <el-form-item>
-          <el-date-picker type="date" v-model="payInfoSearchReq.payEndTime" placeholder="付款结束日期" width="150">
-          </el-date-picker>
-        </el-form-item>
+          <el-form-item>
+            <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payEndTime"
+                            placeholder="付款结束日期">
+            </el-date-picker>
+          </el-form-item>
+        </el-col>
 
-        <el-form-item>
-          <el-button type="primary" @click="searchList()">查询</el-button>
-        </el-form-item>
+        <el-col :span="3">
+          <el-form-item>
+            <el-button type="primary" @click="searchList()">查询</el-button>
+          </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleAdd()">新增</el-button>
-        </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleAdd()">新增</el-button>
+          </el-form-item>
+        </el-col>
       </el-form>
     </el-col>
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="payInfoList" :summary-method="getSummaries" show-summary border style="width: 100%">
+      <el-table :data="payInfoList" :summary-method="getSummaries" scope="scope" border style="width: 100%">
         <el-table-column label="合同号" prop="contractNum" width="150">
         </el-table-column>
 
@@ -70,14 +84,13 @@
 
         <el-table-column label="备注" prop="remark" width="150"></el-table-column>
 
-        <template v-for="idx in 7">
-          <el-table-column prop="payDetailInfoList" :key="idx" :label="'分包' + idx" width="200px">
-            <template slot-scope="scope" v-if="scope.row.payDetailInfoList[idx - 1] != undefined">
-              分包名: {{ scope.row.payDetailInfoList[idx - 1].subContractorName }}
+        <template v-for="(subContractor, index) in subContractorList">
+          <el-table-column prop="payDetailInfoList" :label="subContractor.subContractorName"
+                           v-bind:key="subContractor.subContractorId" width="200px">
+            <template slot-scope="scope">
+              分摊比率: {{ scope.row.payDetailInfoList[index].shareRate }}%
               <br/>
-              分摊比率: {{ scope.row.payDetailInfoList[idx - 1].shareRate }}%
-              <br/>
-              分摊金额: {{ scope.row.payDetailInfoList[idx - 1].shareAmount }}
+              分摊金额: {{ scope.row.payDetailInfoList[index].shareAmount }}
             </template>
           </el-table-column>
         </template>
@@ -124,7 +137,7 @@
         </el-form-item>
 
         <el-form-item label="收款单位" prop="payee">
-          <el-autocomplete class="inline-input" v-model="addPayInfoForm.payee"
+          <el-autocomplete v-model="addPayInfoForm.payee"
                            :fetch-suggestions="payeeFilter" placeholder="请输入内容">
           </el-autocomplete>
         </el-form-item>

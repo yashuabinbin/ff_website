@@ -86,15 +86,17 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item v-for="(subContractor, index) in editContractForm.subContractorList" :key="subContractor.key"
-                      :label="subContractorList[index].subContractorName + ' 分摊比率'"
-                      label-width="150px"
-                      :prop="'subContractorList.' + index + '.shareRate'"
-                      :rules="addContractFormRules.subContractorList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <template v-if="subContractorList !== undefined && subContractorList.length > 0">
+          <el-form-item v-for="(subContractor, index) in editContractForm.subContractorList" :key="subContractor.key"
+                        :label="subContractorList[index].subContractorName + ' 分摊比率'"
+                        label-width="150px"
+                        :prop="'subContractorList.' + index + '.shareRate'"
+                        :rules="addContractFormRules.subContractorList.shareRate">
+            <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
+              <template slot="append">%</template>
+            </el-input>
+          </el-form-item>
+        </template>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="addContractor(false)">新增分包</el-button>
@@ -130,15 +132,17 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item v-for="(subContractor, index) in addContractForm.subContractorList" :key="subContractor.key"
-                      :label="subContractorList[index].subContractorName + ' 分摊比率'"
-                      label-width="150px"
-                      :prop="'subContractorList.' + index + '.shareRate'"
-                      :rules="addContractFormRules.subContractorList.shareRate">
-          <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+        <template v-if="subContractorList !== undefined && subContractorList.length > 0">
+          <el-form-item v-for="(subContractor, index) in addContractForm.subContractorList" :key="subContractor.key"
+                        :label="subContractorList[index].subContractorName + ' 分摊比率'"
+                        label-width="150px"
+                        :prop="'subContractorList.' + index + '.shareRate'"
+                        :rules="addContractFormRules.subContractorList.shareRate">
+            <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
+              <template slot="append">%</template>
+            </el-input>
+          </el-form-item>
+        </template>
       </el-form>
 
       <div slot="footer" class="dialog-footer">
@@ -154,7 +158,7 @@
     name: 'contractManage',
     data () {
       const taxRateValidator = (rule, value, callback) => {
-        if (value == null || value == undefined) {
+        if (value === null || value === undefined) {
           callback(new Error('请输入税率'))
           return
         }

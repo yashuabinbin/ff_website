@@ -39,46 +39,41 @@
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="invoiceList" stripe style="width: 100%">
-        <el-table-column prop="contractNum" label="合同号" width="100px">
+      <el-table :data="invoiceList" stripe show-summary :summary-method="getSummaries" scope="scope"
+                style="width: 100%">
+        <el-table-column prop="contractNum" label="合同号" width="150px">
         </el-table-column>
 
-        <el-table-column prop="invoiceContent" label="发票内容">
+        <el-table-column prop="invoiceContent" label="发票内容" width="150px">
         </el-table-column>
 
-        <el-table-column prop="invoiceTime" label="开票日期">
+        <el-table-column prop="invoiceTime" label="开票日期" width="100px">
           <template slot-scope="scope">
             <span>{{ scope.row.invoiceTime | dateFilter }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="beforeTaxAmount" label="含税金额">
+        <el-table-column prop="beforeTaxAmount" label="含税金额" width="120px">
         </el-table-column>
 
-        <el-table-column prop="taxRate" label="税点"></el-table-column>
+        <el-table-column prop="taxRate" label="税点" width="100px"></el-table-column>
 
-        <el-table-column prop="deductAmount" label="抵扣额"></el-table-column>
+        <el-table-column prop="deductAmount" label="抵扣额" width="120px"></el-table-column>
 
-        <el-table-column label="分摊" width="100px">
-          <template slot-scope="scope">
-            <el-popover trigger="click" placement="top" width="550">
-              <el-row :span="24" v-for="invoiceDetailInfo in scope.row.invoiceDetailInfoList"
-                      :key="invoiceDetailInfo.invoiceDetailId">
-                <el-col :span="9">分包名: {{ invoiceDetailInfo.subContractorName }}</el-col>
-                <el-col :span="6">分摊比率: {{ invoiceDetailInfo.shareRate }}%</el-col>
-                <el-col :span="9">分摊金额: {{ invoiceDetailInfo.shareAmount }}</el-col>
-              </el-row>
+        <template v-for="(subContractor, index) in subContractorList">
+          <el-table-column prop="invoiceDetailInfoList" :label="subContractor.subContractorName"
+                           v-bind:key="subContractor.subContractorId" width="200px">
+            <template slot-scope="scope">
+              分摊比率: {{ scope.row.invoiceDetailInfoList[index].shareRate }}%
+              <br/>
+              分摊金额: {{ scope.row.invoiceDetailInfoList[index].shareAmount }}
+            </template>
+          </el-table-column>
+        </template>
 
-              <div slot="reference" class="name-wrapper">
-                <el-tag size="medium">分摊详情</el-tag>
-              </div>
-            </el-popover>
-          </template>
-        </el-table-column>
+        <el-table-column prop="remark" label="备注" width="150px"></el-table-column>
 
-        <el-table-column prop="remark" label="备注"></el-table-column>
-
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="150px" fixed="right">
           <template scope="scope">
             <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="danger" size="small" @click="handleDel(scope.row.invoiceId)">删除</el-button>
@@ -100,7 +95,8 @@
     </el-col>
 
     <el-dialog title="新增" :visible.sync="addInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="addInvoiceInfoForm" label-width="80px" :rules="addInvoiceInfoFormRules" ref="addInvoiceInfoForm">
+      <el-form :model="addInvoiceInfoForm" label-width="100px" :rules="addInvoiceInfoFormRules"
+               ref="addInvoiceInfoForm">
         <el-form-item label="合同" prop="contractId">
           <el-select v-model="addInvoiceInfoForm.contractId" filterable placeholder="请选择"
                      v-on:change="contractChange(addInvoiceInfoForm.contractId, true)">
@@ -218,7 +214,7 @@
     name: 'invoiceManage',
     data () {
       let shareRateValidator = (rule, value, callback) => {
-        if (!value) {
+        if (value === null || value === undefined) {
           callback(new Error('请输入比率'))
           return
         }
@@ -227,9 +223,7 @@
           return
         }
 
-        if (
-          !new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)
-        ) {
+        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
           callback(new Error('数值范围0-100，小数点后至多2位'))
           return
         }
@@ -241,9 +235,7 @@
           callback(new Error('金额不能小于0'))
           return
         }
-        if (
-          !new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)
-        ) {
+        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
           callback(new Error('小数点后至多2位'))
           return
         }
@@ -252,6 +244,7 @@
 
       return {
         total: 0,
+        sumMap: null,
 
         invoiceContentSuggestList: [],
 
@@ -338,16 +331,14 @@
     },
     methods: {
       getContractList: function () {
-        this.axios({
+        this.doRequest({
           method: 'post',
           url: this.HOST + '/contract/listAll',
           headers: {
             Authorization: localStorage.getItem('TOKEN')
           }
         }).then(response => {
-          if (parseInt(response.data.status, 0) === 200) {
-            this.contractList = response.data.result
-          }
+          this.contractList = response.result
         })
       },
       getSubContractorList: function () {
@@ -366,6 +357,7 @@
         }).then(response => {
           this.invoiceList = response.result.list
           this.total = response.result.total
+          this.sumMap = response.result.sumMap
         })
       },
       searchList: function () {
@@ -481,6 +473,25 @@
         return invoiceContentSuggestList => {
           return (invoiceContentSuggestList.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
         }
+      },
+      getSummaries (param) {
+        let sum = []
+        sum[0] = '合计'
+        sum[1] = null
+        sum[2] = null
+        sum[3] = this.sumMap ? this.sumMap['beforeTaxAmount'] : null
+        sum[4] = null
+        sum[5] = this.sumMap ? this.sumMap['deductAmount'] : null
+        sum[6] = this.sumMap ? this.sumMap['subContractor1'] : null
+        sum[7] = this.sumMap ? this.sumMap['subContractor2'] : null
+        sum[8] = this.sumMap ? this.sumMap['subContractor3'] : null
+        sum[9] = this.sumMap ? this.sumMap['subContractor4'] : null
+        sum[10] = this.sumMap ? this.sumMap['subContractor5'] : null
+        sum[11] = this.sumMap ? this.sumMap['subContractor6'] : null
+        sum[12] = this.sumMap ? this.sumMap['subContractor7'] : null
+        sum[13] = null
+        sum[14] = null
+        return sum
       }
     }
   }

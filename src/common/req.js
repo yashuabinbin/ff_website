@@ -1,4 +1,5 @@
 import axios from 'axios'
+import router from '../router'
 
 const doRequest = axios.create({
   timeout: 5000
@@ -19,7 +20,7 @@ doRequest.interceptors.response.use(
     if (result === 100001) {
       localStorage.removeItem('TOKEN')
       localStorage.removeItem('LOGINED_USER')
-      this.$router.push('/login')
+      router.push('/login')
     }
 
     if (result === 200) {
