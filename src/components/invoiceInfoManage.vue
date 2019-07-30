@@ -391,7 +391,6 @@
         this.editInvoiceInfoForm.taxRate = 0
         this.editInvoiceInfoForm.invoiceDetailInfoList = []
         this.editInvoiceInfoForm = this.deepCopy(invoiceInfo)
-        console.info(this.editInvoiceInfoForm.invoiceDetailInfoList);
       },
       handleDel: function (invoiceId) {
         if (!confirm('确认删除?')) {

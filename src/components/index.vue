@@ -57,6 +57,11 @@
             name: '发票管理',
             to: 'invoiceInfoManage',
             select: false
+          },
+          {
+            name: '产值管理',
+            to: 'outputValueManage',
+            select: false
           }
         ],
         selectedMenu: {

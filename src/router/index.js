@@ -6,6 +6,7 @@ import payInfoManage from '../components/payInfoManage.vue'
 import contractManage from '../components/contractManage.vue'
 import subContractorManage from '../components/subContractorManage.vue'
 import invoiceInfoManage from '../components/invoiceInfoManage.vue'
+import outputValueManage from '../components/outputValueManage.vue'
 
 Vue.use(Router)
 
@@ -39,6 +40,10 @@ const router = new Router({
         {
           path: '/invoiceInfoManage',
           component: invoiceInfoManage
+        },
+        {
+          path: '/outputValueManage',
+          component: outputValueManage
         }
       ]
     }
