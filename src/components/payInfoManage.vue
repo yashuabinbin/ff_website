@@ -64,7 +64,7 @@
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="payInfoList" :summary-method="getSummaries" scope="scope" border style="width: 100%">
+      <el-table :data="payInfoList" show-summary :summary-method="getSummaries" scope="scope" border style="width: 100%">
         <el-table-column label="合同号" prop="contractNum" width="150">
         </el-table-column>
 

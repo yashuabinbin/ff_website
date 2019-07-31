@@ -1,17 +1,16 @@
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
 import Vue from 'vue'
-import App from './App'
 import router from './router'
 import {formatDate} from './common/date'
 import doRequest from './common/req'
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
 import * as axios from 'axios'
-
-Vue.config.productionTip = false
+import App from './App'
 
 Vue.use(ElementUI)
 Vue.prototype.$ajax = axios
 Vue.prototype.HOST = '/api'
+Vue.config.productionTip = false
 
 // 注册
 Vue.filter('dateTimeFilter', function (time) {

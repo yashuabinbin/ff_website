@@ -95,6 +95,10 @@
 </script>
 
 <style>
+  html,body {
+    font-size: 10px;
+  }
+
   .el-header,
   .el-footer {
     background-color: #b3c0d1;
