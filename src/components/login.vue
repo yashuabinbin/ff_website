@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-form ref="loginForm" :model="loginForm" :rules="rules" label-width="80px" class="login-box">
-      <h3 class="login-title">欢迎登录</h3>
+      <h1 class="login-title">欢迎登录</h1>
       <el-form-item label="账号" prop="username" @keyup.enter.native="submitForm()">
         <el-input type="text" placeholder="请输入账号" v-model="loginForm.username"/>
       </el-form-item>

@@ -131,8 +131,8 @@
 
         <el-form-item label="付款对象" prop="payType" label-position="left">
           <el-radio-group v-model="addPayInfoForm.payType">
-            <el-radio label="SUB_CONTRACTOR">分包</el-radio>
-            <el-radio label="MIGRANT_WORKER">农民工</el-radio>
+            <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
+            <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -198,8 +198,8 @@
 
         <el-form-item label="付款对象" prop="payType" label-position="left">
           <el-radio-group v-model="editPayInfoForm.payType">
-            <el-radio label="SUB_CONTRACTOR">分包</el-radio>
-            <el-radio label="MIGRANT_WORKER">农民工</el-radio>
+            <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
+            <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
           </el-radio-group>
         </el-form-item>
 
