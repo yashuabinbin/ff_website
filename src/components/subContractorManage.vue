@@ -10,31 +10,18 @@
         <el-form-item>
           <el-button type="primary" @click="searchList()">查询</el-button>
         </el-form-item>
-
-        <!--<el-form-item>-->
-          <!--<el-button type="primary" @click="handleAdd()">新增</el-button>-->
-        <!--</el-form-item>-->
       </el-form>
     </el-col>
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="subContractorList" stripe style="width: 100%">
+      <el-table :data="subContractorList" border="1px" style="width: 100%">
         <el-table-column prop="subContractorId" label="id"></el-table-column>
-        <el-table-column prop="subContractorName" label="分包名称">
-        </el-table-column>
-
-        <el-table-column prop="createTime" label="创建时间" width="200px">
+        <el-table-column prop="subContractorName" label="分包名称"></el-table-column>
+        <el-table-column prop="createTime" label="创建时间" >
           <template slot-scope="scope">
             <span>{{ scope.row.createTime | dateTimeFilter }}</span>
           </template>
-        </el-table-column>
-
-        <el-table-column label="操作">
-          <!--<template slot-scope="scope">-->
-            <!--<el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>-->
-            <!--<el-button type="danger" size="small" @click="handleDel(scope.row.subContractorId)">删除</el-button>-->
-          <!--</template>-->
         </el-table-column>
       </el-table>
     </el-col>

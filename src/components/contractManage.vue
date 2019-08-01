@@ -24,9 +24,10 @@
     <el-col :span="24" class="toolbar">
       <!--列表-->
       <el-table :data="contractList" border style="width: 100%">
-        <el-table-column prop="contractNum" label="合同号" width="150px"></el-table-column>
+        <el-table-column prop="contractNum" label="合同号" width="100px"></el-table-column>
         <el-table-column prop="contractName" label="合同名称" width="200px"></el-table-column>
-        <el-table-column prop="contractDesc" label="合同描述" width="200px"></el-table-column>
+        <el-table-column prop="companyName" label="对方单位" width="200px"></el-table-column>
+        <el-table-column prop="contractAmount" label="合同金额" width="200px"></el-table-column>
         <el-table-column prop="taxRate" label="税率" width="100px"></el-table-column>
 
         <el-table-column label="分摊比率" style="text-align:center">
@@ -74,6 +75,15 @@
           <el-input v-model.trim="editContractForm.contractNum" auto-complete="off"></el-input>
         </el-form-item>
 
+        <el-form-item label="对方单位" prop="companyName">
+          <el-input v-model.trim="editContractForm.companyName" auto-complete="off"></el-input>
+        </el-form-item>
+
+        <el-form-item label="合同金额" prop="contractAmount">
+          <el-input type="number" step="0.01" v-model.number="editContractForm.contractAmount"
+                    auto-complete="off"></el-input>
+        </el-form-item>
+
         <el-form-item label="合同描述" prop="contractDesc">
           <el-input type="textarea" v-model.trim="editContractForm.contractDesc"
                     auto-complete="off" maxlength="30" show-word-limit>
@@ -102,7 +112,6 @@
       </el-form>
 
       <div slot="footer" class="dialog-footer">
-        <el-button @click="addContractor(false)">新增分包</el-button>
         <el-button @click.native="editContractFormVisible = false">取消</el-button>
         <el-button type="primary" @click.native="editContractFormSubmit('editContractForm')">提交</el-button>
       </div>
@@ -118,6 +127,15 @@
 
         <el-form-item label="合同号" prop="contractNum">
           <el-input v-model.trim="addContractForm.contractNum" auto-complete="off"></el-input>
+        </el-form-item>
+
+        <el-form-item label="对方单位" prop="companyName">
+          <el-input v-model.trim="addContractForm.companyName" auto-complete="off"></el-input>
+        </el-form-item>
+
+        <el-form-item label="合同金额" prop="contractAmount">
+          <el-input type="number" step="0.01" v-model.number="addContractForm.contractAmount"
+                    auto-complete="off"></el-input>
         </el-form-item>
 
         <el-form-item label="合同描述" prop="contractDesc">
@@ -205,7 +223,9 @@
           contractId: '',
           contractName: '',
           contractNum: '',
+          companyName: '',
           contractDesc: '',
+          contractAmount: '',
           taxRate: null
         },
 
@@ -219,6 +239,8 @@
           contractName: '',
           contractNum: '',
           contractDesc: '',
+          companyName: '',
+          contractAmount: '',
           taxRate: null
         },
         addContractFormRules: {
@@ -233,6 +255,15 @@
           ],
           contractNum: [
             {required: true, message: '请输入合同号', trigger: 'change'},
+            {
+              min: 2,
+              max: 20,
+              message: '长度在 2 到 20 个字符',
+              trigger: 'change'
+            }
+          ],
+          companyName: [
+            {required: true, message: '请输入对方单位', trigger: 'change'},
             {
               min: 2,
               max: 20,
@@ -279,6 +310,8 @@
         this.addContractForm.contractNum = ''
         this.addContractForm.contractName = ''
         this.addContractForm.contractDesc = ''
+        this.addContractForm.companyName = ''
+        this.addContractForm.contractAmount = null
         this.addContractForm.taxRate = null
         this.addContractForm.subContractorList = []
         this.subContractorList.forEach(item => {
@@ -290,7 +323,9 @@
         this.editContractForm.contractId = null
         this.editContractForm.contractNum = ''
         this.editContractForm.contractName = ''
+        this.editContractForm.contractAmount = null
         this.editContractForm.contractDesc = ''
+        this.editContractForm.companyName = ''
         this.editContractForm.taxRate = null
         this.editContractForm = this.deepCopy(contract)
       },
@@ -359,6 +394,3 @@
     }
   }
 </script>
-<style>
-
-</style>

@@ -1,9 +1,9 @@
 <template>
   <div class="index">
-    <el-container>
+    <el-container style="height:100%" direction="vertical">
       <el-header style="text-align: right; font-size: 12px">
         <el-dropdown>
-          <span class="el-dropdown-link">dsfad</span>
+          <span class="el-dropdown-link">{{username}}</span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item @click.native="logout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
@@ -12,7 +12,8 @@
       <el-container>
         <el-aside width="140px">
           <el-menu>
-            <el-menu-item v-for="menu in menuList" v-on:click="go(menu)" v-bind:key="menu.name" style="padding-left: 15px;">
+            <el-menu-item v-for="menu in menuList" v-on:click="go(menu)" v-bind:key="menu.name"
+                          style="padding-left: 15px;">
               <span slot="title">
                 {{ menu.name }}
               </span>
@@ -37,6 +38,7 @@
     name: 'index',
     data: function () {
       return {
+        username: '',
         menuList: [
           {
             name: '合同管理',
@@ -74,6 +76,10 @@
     created: function () {
       this.$router.push(this.menuList[0].to)
       this.selectedMenu = this.menuList[0]
+      this.username = JSON.parse(localStorage.getItem('LOGINED_USER')).username
+
+      console.info(localStorage.getItem('LOGINED_USER'))
+      console.info(JSON.parse(localStorage.getItem('LOGINED_USER')).username)
     },
     methods: {
       go: function (menu) {
@@ -95,8 +101,14 @@
 </script>
 
 <style>
-  html,body {
+  html, body {
     font-size: 10px;
+  }
+
+  .index {
+    padding: 0px;
+    margin: 0px;
+    height: 100%;
   }
 
   .el-header,
@@ -110,7 +122,7 @@
   .el-aside {
     background-color: #d3dce6;
     color: #333;
-    text-align: center  ;
+    text-align: center;
     line-height: 200px;
   }
 
@@ -154,7 +166,7 @@
     margin-right: 10px;
   }
 
-  .el-table th, td>.cell {
+  .el-table th, td > .cell {
     text-align: center;
   }
 

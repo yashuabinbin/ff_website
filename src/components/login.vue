@@ -48,7 +48,7 @@
           }
         }).then(response => {
           localStorage.setItem('TOKEN', response.result.token)
-          localStorage.setItem('LOGINED_USER', response.result.sysUser)
+          localStorage.setItem('LOGINED_USER', JSON.stringify(response.result.sysUser))
           this.$router.push('/index')
         })
       }
