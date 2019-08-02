@@ -25,17 +25,17 @@
       <!--列表-->
       <el-table :data="contractList" border style="width: 100%">
         <el-table-column prop="contractNum" label="合同号" width="100px"></el-table-column>
-        <el-table-column prop="contractName" label="合同名称" width="200px"></el-table-column>
+        <el-table-column prop="contractName" label="合同名称" width="180px"></el-table-column>
         <el-table-column prop="companyName" label="对方单位" width="200px"></el-table-column>
-        <el-table-column prop="contractAmount" label="合同金额" width="200px"></el-table-column>
-        <el-table-column prop="taxRate" label="税率" width="100px"></el-table-column>
+        <el-table-column prop="contractAmount" label="合同金额" width="170px"></el-table-column>
+        <el-table-column prop="taxRate" label="税率" width="90px"></el-table-column>
 
-        <el-table-column label="分摊比率" style="text-align:center">
+        <el-table-column label="分摊值" style="text-align:center">
           <template v-for="(subContractor, index) in subContractorList">
             <el-table-column prop="subContractorList" :label="subContractor.subContractorName"
-                             v-bind:key="subContractor.subContractorId" width="200px">
+                             v-bind:key="subContractor.subContractorId" width="150px">
               <template slot-scope="scope">
-                {{ scope.row.subContractorList[index].shareRate }}%
+                {{ scope.row.subContractorList[index].subContractorAmount }}
               </template>
             </el-table-column>
           </template>
@@ -99,12 +99,11 @@
         <el-row :span="24" v-if="subContractorList !== undefined && subContractorList.length > 0">
           <el-col :span="12" v-for="(subContractor, index) in editContractForm.subContractorList"
                   :key="subContractor.subContractorId">
-            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊比率'"
-                          :prop="'subContractorList.' + index + '.shareRate'"
-                          :rules="addContractFormRules.subContractorList.shareRate"
+            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊值'"
+                          :prop="'subContractorList.' + index + '.subContractorAmount'"
+                          :rules="addContractFormRules.subContractorList.subContractorAmount"
                           label-width="150px">
-              <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
-                <template slot="append">%</template>
+              <el-input type="number" step="0.01" v-model.number="subContractor.subContractorAmount">
               </el-input>
             </el-form-item>
           </el-col>
@@ -156,12 +155,11 @@
         <el-row :span="24" v-if="subContractorList !== undefined && subContractorList.length > 0">
           <el-col :span="12" v-for="(subContractor, index) in addContractForm.subContractorList"
                   :key="subContractor.subContractorId">
-            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊比率'"
-                          :prop="'subContractorList.' + index + '.shareRate'"
-                          :rules="addContractFormRules.subContractorList.shareRate"
+            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊值'"
+                          :prop="'subContractorList.' + index + '.subContractorAmount'"
+                          :rules="addContractFormRules.subContractorList.subContractorAmount"
                           label-width="150px">
-              <el-input type="number" step="0.01" v-model.number="subContractor.shareRate">
-                <template slot="append">%</template>
+              <el-input type="number" step="0.01" v-model.number="subContractor.subContractorAmount">
               </el-input>
             </el-form-item>
           </el-col>
@@ -177,220 +175,223 @@
 </template>
 
 <script>
-  export default {
-    name: 'contractManage',
-    data () {
-      const taxRateValidator = (rule, value, callback) => {
-        if (value === null || value === undefined) {
-          callback(new Error('请输入税率'))
-          return
-        }
+    export default {
+        name: 'contractManage',
+        data() {
+            const taxRateValidator = (rule, value, callback) => {
+                if (value === null || value === undefined) {
+                    callback(new Error('请输入税率'))
+                    return
+                }
 
-        if (value < 0 || value > 100) {
-          callback(new Error('数值范围0-100，小数点后至多2位'))
-          return
-        }
+                if (value < 0 || value > 100) {
+                    callback(new Error('数值范围0-100，小数点后至多2位'))
+                    return
+                }
 
-        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
-          callback(new Error('数值范围0-100，小数点后至多2位'))
-          return
-        }
-        callback()
-      }
+                if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
+                    callback(new Error('数值范围0-100，小数点后至多2位'))
+                    return
+                }
+                callback()
+            }
 
-      return {
-        subContractorList: [],
+            return {
+                subContractorList: [],
 
-        contractList: [],
-        contractSearchReq: {
-          contractNum: '',
-          contractName: '',
-          pageIndex: 0,
-          pageSize: 12
+                contractList: [],
+                contractSearchReq: {
+                    contractNum: '',
+                    contractName: '',
+                    pageIndex: 0,
+                    pageSize: 12
+                },
+                total: 0,
+
+                addContractFormVisible: false,
+                editContractFormVisible: false,
+
+                editContractForm: {
+                    subContractorList: [
+                        {
+                            subContractorId: '',
+                            subContractorAmount: null
+                        }
+                    ],
+                    contractId: '',
+                    contractName: '',
+                    contractNum: '',
+                    companyName: '',
+                    contractDesc: '',
+                    contractAmount: '',
+                    taxRate: null
+                },
+
+                addContractForm: {
+                    subContractorList: [
+                        {
+                            subContractorId: '',
+                            shareRate: null
+                        }
+                    ],
+                    contractName: '',
+                    contractNum: '',
+                    contractDesc: '',
+                    companyName: '',
+                    contractAmount: '',
+                    taxRate: null
+                },
+                addContractFormRules: {
+                    contractName: [
+                        {required: true, message: '请输入合同名', trigger: 'change'},
+                        {
+                            min: 2,
+                            max: 20,
+                            message: '长度在 2 到 20 个字符',
+                            trigger: 'change'
+                        }
+                    ],
+                    contractNum: [
+                        {required: true, message: '请输入合同号', trigger: 'change'},
+                        {
+                            min: 2,
+                            max: 20,
+                            message: '长度在 2 到 20 个字符',
+                            trigger: 'change'
+                        }
+                    ],
+                    companyName: [
+                        {required: true, message: '请输入对方单位', trigger: 'change'},
+                        {
+                            min: 2,
+                            max: 20,
+                            message: '长度在 2 到 20 个字符',
+                            trigger: 'change'
+                        }
+                    ],
+                    taxRate: [{validator: taxRateValidator, trigger: 'change'}],
+                    idx: [{required: true, message: '请选择序号', trigger: 'change'}],
+                    subContractorList: {
+                        subContractorId: [
+                            {required: true, message: '请选择分包', trigger: 'change'}
+                        ],
+                        shareRate: [{validator: taxRateValidator, trigger: 'change'}]
+                    }
+                }
+            }
         },
-        total: 0,
-
-        addContractFormVisible: false,
-        editContractFormVisible: false,
-
-        editContractForm: {
-          subContractorList: [
-            {
-              subContractorId: '',
-              shareRate: null
-            }
-          ],
-          contractId: '',
-          contractName: '',
-          contractNum: '',
-          companyName: '',
-          contractDesc: '',
-          contractAmount: '',
-          taxRate: null
+        created() {
+            this.getContractList()
+            this.getSubContractorList()
         },
+        methods: {
+            getContractList: function () {
+                this.doRequest({
+                    method: 'post',
+                    url: this.HOST + '/contract/list',
+                    data: this.contractSearchReq
+                }).then(response => {
+                    this.contractList = response.result.list
+                    this.total = response.result.total
+                })
+            },
+            searchList: function () {
+                this.contractSearchReq.pageIndex = 0
+                this.getContractList()
+            },
+            pageChange: function (pageIndex) {
+                this.contractSearchReq.pageIndex = pageIndex
+                this.getContractList()
+            },
+            handleAdd: function () {
+                this.addContractFormVisible = true
+                this.addContractForm.contractNum = ''
+                this.addContractForm.contractName = ''
+                this.addContractForm.contractDesc = ''
+                this.addContractForm.companyName = ''
+                this.addContractForm.contractAmount = null
+                this.addContractForm.taxRate = null
+                this.addContractForm.subContractorList = []
+                this.subContractorList.forEach(item => {
+                    this.addContractForm.subContractorList.push({
+                        subContractorId: item.subContractorId,
+                        subContractorAmount: 0
+                    })
+                })
+            },
+            handleEdit: function (contract) {
+                this.editContractFormVisible = true
+                this.editContractForm.contractId = null
+                this.editContractForm.contractNum = ''
+                this.editContractForm.contractName = ''
+                this.editContractForm.contractAmount = null
+                this.editContractForm.contractDesc = ''
+                this.editContractForm.companyName = ''
+                this.editContractForm.taxRate = null
+                this.editContractForm = this.deepCopy(contract)
+            },
+            handleDel: function (contractId) {
+                if (!confirm('确认删除?')) {
+                    return
+                }
 
-        addContractForm: {
-          subContractorList: [
-            {
-              subContractorId: '',
-              shareRate: null
-            }
-          ],
-          contractName: '',
-          contractNum: '',
-          contractDesc: '',
-          companyName: '',
-          contractAmount: '',
-          taxRate: null
-        },
-        addContractFormRules: {
-          contractName: [
-            {required: true, message: '请输入合同名', trigger: 'change'},
-            {
-              min: 2,
-              max: 20,
-              message: '长度在 2 到 20 个字符',
-              trigger: 'change'
-            }
-          ],
-          contractNum: [
-            {required: true, message: '请输入合同号', trigger: 'change'},
-            {
-              min: 2,
-              max: 20,
-              message: '长度在 2 到 20 个字符',
-              trigger: 'change'
-            }
-          ],
-          companyName: [
-            {required: true, message: '请输入对方单位', trigger: 'change'},
-            {
-              min: 2,
-              max: 20,
-              message: '长度在 2 到 20 个字符',
-              trigger: 'change'
-            }
-          ],
-          taxRate: [{validator: taxRateValidator, trigger: 'change'}],
-          idx: [{required: true, message: '请选择序号', trigger: 'change'}],
-          subContractorList: {
-            subContractorId: [
-              {required: true, message: '请选择分包', trigger: 'change'}
-            ],
-            shareRate: [{validator: taxRateValidator, trigger: 'change'}]
-          }
-        }
-      }
-    },
-    created () {
-      this.getContractList()
-      this.getSubContractorList()
-    },
-    methods: {
-      getContractList: function () {
-        this.doRequest({
-          method: 'post',
-          url: this.HOST + '/contract/list',
-          data: this.contractSearchReq
-        }).then(response => {
-          this.contractList = response.result.list
-          this.total = response.result.total
-        })
-      },
-      searchList: function () {
-        this.contractSearchReq.pageIndex = 0
-        this.getContractList()
-      },
-      pageChange: function (pageIndex) {
-        this.contractSearchReq.pageIndex = pageIndex
-        this.getContractList()
-      },
-      handleAdd: function () {
-        this.addContractFormVisible = true
-        this.addContractForm.contractNum = ''
-        this.addContractForm.contractName = ''
-        this.addContractForm.contractDesc = ''
-        this.addContractForm.companyName = ''
-        this.addContractForm.contractAmount = null
-        this.addContractForm.taxRate = null
-        this.addContractForm.subContractorList = []
-        this.subContractorList.forEach(item => {
-          this.addContractForm.subContractorList.push({subContractorId: item.subContractorId, shareRate: 0})
-        })
-      },
-      handleEdit: function (contract) {
-        this.editContractFormVisible = true
-        this.editContractForm.contractId = null
-        this.editContractForm.contractNum = ''
-        this.editContractForm.contractName = ''
-        this.editContractForm.contractAmount = null
-        this.editContractForm.contractDesc = ''
-        this.editContractForm.companyName = ''
-        this.editContractForm.taxRate = null
-        this.editContractForm = this.deepCopy(contract)
-      },
-      handleDel: function (contractId) {
-        if (!confirm('确认删除?')) {
-          return
-        }
+                this.doRequest({
+                    method: 'post',
+                    url: this.HOST + '/contract/delete',
+                    data: {
+                        contractId: contractId
+                    }
+                }).then(response => {
+                    alert('删除成功')
+                    this.getContractList()
+                })
+            },
+            addContractFormSubmit: function (addContractForm) {
+                this.$refs[addContractForm].validate(valid => {
+                    if (valid) {
+                        this.doRequest({
+                            method: 'post',
+                            url: this.HOST + '/contract/add',
+                            data: this.addContractForm
+                        }).then(response => {
+                            this.getContractList()
+                            this.addContractFormVisible = false
+                            alert('添加成功')
+                        })
+                    }
+                })
+            },
+            editContractFormSubmit: function (editContractForm) {
+                this.$refs[editContractForm].validate(valid => {
+                    if (valid) {
+                        this.doRequest({
+                            method: 'post',
+                            url: this.HOST + '/contract/edit',
+                            data: this.editContractForm
+                        }).then(response => {
+                            this.getContractList()
+                            this.editContractFormVisible = false
+                            alert('修改成功')
+                        })
+                    }
+                })
+            },
 
-        this.doRequest({
-          method: 'post',
-          url: this.HOST + '/contract/delete',
-          data: {
-            contractId: contractId
-          }
-        }).then(response => {
-          alert('删除成功')
-          this.getContractList()
-        })
-      },
-      addContractFormSubmit: function (addContractForm) {
-        this.$refs[addContractForm].validate(valid => {
-          if (valid) {
-            this.doRequest({
-              method: 'post',
-              url: this.HOST + '/contract/add',
-              data: this.addContractForm
-            }).then(response => {
-              this.getContractList()
-              this.addContractFormVisible = false
-              alert('添加成功')
-            })
-          }
-        })
-      },
-      editContractFormSubmit: function (editContractForm) {
-        this.$refs[editContractForm].validate(valid => {
-          if (valid) {
-            this.doRequest({
-              method: 'post',
-              url: this.HOST + '/contract/edit',
-              data: this.editContractForm
-            }).then(response => {
-              this.getContractList()
-              this.editContractFormVisible = false
-              alert('修改成功')
-            })
-          }
-        })
-      },
-
-      removeSubContractor: function (item, isAdd) {
-        let index = (isAdd ? this.addContractForm : this.editContractForm).subContractorList.indexOf(item)
-        if (index !== -1) {
-          (isAdd ? this.addContractForm : this.editContractForm).subContractorList.splice(index, 1)
+            removeSubContractor: function (item, isAdd) {
+                let index = (isAdd ? this.addContractForm : this.editContractForm).subContractorList.indexOf(item)
+                if (index !== -1) {
+                    (isAdd ? this.addContractForm : this.editContractForm).subContractorList.splice(index, 1)
+                }
+            },
+            getSubContractorList: function () {
+                this.doRequest({
+                    method: 'post',
+                    url: this.HOST + '/subContractor/listAll'
+                }).then(response => {
+                    this.subContractorList = response.result
+                    console.info(this.subContractorList)
+                })
+            }
         }
-      },
-      getSubContractorList: function () {
-        this.doRequest({
-          method: 'post',
-          url: this.HOST + '/subContractor/listAll'
-        }).then(response => {
-          this.subContractorList = response.result
-          console.info(this.subContractorList)
-        })
-      }
     }
-  }
 </script>
