@@ -280,7 +280,7 @@
         }
       }
     },
-    created() {
+    created () {
       this.getContractList()
       this.getSubContractorList()
     },
