@@ -1,219 +1,212 @@
 <template>
-  <section>
-    <!--工具条-->
-    <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
-      <el-form :inline="true" style="float: left;">
-        <el-form-item>
-          <el-input placeholder="合同号" v-model="invoiceInfoSearchReq.contractNum" clearable></el-input>
-        </el-form-item>
+    <section>
+        <!--工具条-->
+        <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+            <el-form :inline="true" style="float: left;">
+                <el-form-item>
+                    <el-input placeholder="合同号" v-model="invoiceInfoSearchReq.contractNum" clearable></el-input>
+                </el-form-item>
 
-        <el-form-item>
-          <el-select v-model="invoiceInfoSearchReq.subContractorId" placeholder="请选择分包" clearable>
-            <el-option v-for="item in subContractorList" :key="item.subContractorId"
-                       :label="item.subContractorName" :value="item.subContractorId">
-            </el-option>
-          </el-select>
-        </el-form-item>
+                <el-form-item>
+                    <el-date-picker type="date" v-model="invoiceInfoSearchReq.invoiceStartTime"
+                                    placeholder="开票开始日期" width="150">
+                    </el-date-picker>
+                </el-form-item>
 
-        <el-form-item>
-          <el-date-picker type="date" v-model="invoiceInfoSearchReq.invoiceStartTime"
-                          placeholder="开票开始日期" width="150">
-          </el-date-picker>
-        </el-form-item>
+                <el-form-item>
+                    <el-date-picker type="date" v-model="invoiceInfoSearchReq.invoiceEndTime"
+                                    placeholder="开票结束日期" width="150">
+                    </el-date-picker>
+                </el-form-item>
 
-        <el-form-item>
-          <el-date-picker type="date" v-model="invoiceInfoSearchReq.invoiceEndTime"
-                          placeholder="开票结束日期" width="150">
-          </el-date-picker>
-        </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="searchList()">查询</el-button>
+                </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" @click="searchList()">查询</el-button>
-        </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="handleAdd()">新增</el-button>
+                </el-form-item>
+            </el-form>
+        </el-col>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleAdd()">新增</el-button>
-        </el-form-item>
-      </el-form>
-    </el-col>
+        <el-col :span="24" class="toolbar">
+            <!--列表-->
+            <el-table :data="invoiceList" border show-summary :summary-method="getSummaries" scope="scope"
+                      style="width: 100%">
+                <el-table-column prop="contractNum" label="合同号" width="120px">
+                </el-table-column>
+                <el-table-column prop="contractName" label="合同名称" width="150px">
+                </el-table-column>
+                <el-table-column prop="invoiceContent" label="发票内容" width="150px">
+                </el-table-column>
 
-    <el-col :span="24" class="toolbar">
-      <!--列表-->
-      <el-table :data="invoiceList" stripe show-summary :summary-method="getSummaries" scope="scope"
-                style="width: 100%">
-        <el-table-column prop="contractNum" label="合同号" width="150px">
-        </el-table-column>
+                <el-table-column prop="invoiceTime" label="开票日期" width="100px">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.invoiceTime | dateFilter }}</span>
+                    </template>
+                </el-table-column>
 
-        <el-table-column prop="invoiceContent" label="发票内容" width="150px">
-        </el-table-column>
+                <el-table-column prop="beforeTaxAmount" label="含税金额" width="120px">
+                </el-table-column>
+                <el-table-column prop="taxRate" label="税点" width="100px"></el-table-column>
+                <el-table-column prop="deductAmount" label="抵扣额" width="120px"></el-table-column>
+                <el-table-column label="抵扣额分摊金额" style="text-align:center">
+                    <template v-for="(subContractor, index) in subContractorList">
+                        <el-table-column prop="subContractorList" :label="subContractor.subContractorName"
+                                         v-bind:key="subContractor.subContractorId" width="150px">
+                            <template slot-scope="scope">
+                                {{ scope.row.invoiceDetailInfoList[index].subContractorDeductAmount }}
+                            </template>
+                        </el-table-column>
+                    </template>
+                </el-table-column>
 
-        <el-table-column prop="invoiceTime" label="开票日期" width="100px">
-          <template slot-scope="scope">
-            <span>{{ scope.row.invoiceTime | dateFilter }}</span>
-          </template>
-        </el-table-column>
+                <el-table-column prop="remark" label="备注" width="150px"></el-table-column>
 
-        <el-table-column prop="beforeTaxAmount" label="含税金额" width="120px">
-        </el-table-column>
+                <el-table-column label="操作" width="160px" fixed="right">
+                    <template slot-scope="scope">
+                        <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button type="danger" size="small" @click="handleDel(scope.row.invoiceId)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-col>
 
-        <el-table-column prop="taxRate" label="税点" width="100px"></el-table-column>
+        <!--工具条-->
+        <el-col :span="24" class="toolbar">
+            <el-pagination layout="prev, pager, next" @current-change="pageChange" style="float:right;"
+                           :page-size="invoiceInfoSearchReq.pageSize" :total="total">
+            </el-pagination>
+        </el-col>
 
-        <el-table-column prop="deductAmount" label="抵扣额" width="120px"></el-table-column>
+        <el-dialog title="新增" :visible.sync="addInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
+            <el-form :model="addInvoiceInfoForm" label-width="100px" :rules="addInvoiceInfoFormRules"
+                     ref="addInvoiceInfoForm">
+                <el-form-item label="合同" prop="contractId">
+                    <el-select v-model="addInvoiceInfoForm.contractId" filterable placeholder="请选择"
+                               v-on:change="contractChange(addInvoiceInfoForm.contractId, true)">
+                        <el-option v-for="item in contractList" :key="item.contractId"
+                                   :label="item.contractName" :value="item.contractId">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
 
-        <template v-for="(subContractor, index) in subContractorList">
-          <el-table-column prop="invoiceDetailInfoList" :label="subContractor.subContractorName"
-                           v-bind:key="subContractor.subContractorId" width="200px">
-            <template slot-scope="scope">
-              分摊比率: {{ scope.row.invoiceDetailInfoList[index].shareRate }}%
-              <br/>
-              分摊金额: {{ scope.row.invoiceDetailInfoList[index].shareAmount }}
-            </template>
-          </el-table-column>
-        </template>
+                <el-form-item label="发票内容" prop="invoiceContent">
+                    <el-autocomplete class="inline-input" v-model="addInvoiceInfoForm.invoiceContent"
+                                     :fetch-suggestions="invoiceContentFilter" placeholder="请输入内容">
+                    </el-autocomplete>
+                </el-form-item>
 
-        <el-table-column prop="remark" label="备注" width="150px"></el-table-column>
+                <el-form-item label="开票日期" prop="invoiceTime">
+                    <el-date-picker v-model="addInvoiceInfoForm.invoiceTime" type="date">
+                    </el-date-picker>
+                </el-form-item>
 
-        <el-table-column label="操作" width="150px" fixed="right">
-          <template slot-scope="scope">
-            <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDel(scope.row.invoiceId)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-col>
+                <el-form-item label="含税金额" prop="beforeTaxAmount">
+                    <el-input type="number" step="0.01" v-model.number="addInvoiceInfoForm.beforeTaxAmount"
+                              auto-complete="off">
+                    </el-input>
+                </el-form-item>
 
-    <!--工具条-->
-    <el-col :span="24" class="toolbar">
-      <el-pagination layout="prev, pager, next" @current-change="pageChange" style="float:right;"
-                     :page-size="invoiceInfoSearchReq.pageSize" :total="total">
-      </el-pagination>
-    </el-col>
+                <el-form-item label="税点" prop="taxRate">
+                    <el-input type="number" step="0.01" v-model.number="addInvoiceInfoForm.taxRate" auto-complete="off">
+                        <template slot="append">%</template>
+                    </el-input>
+                </el-form-item>
 
-    <el-dialog title="新增" :visible.sync="addInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="addInvoiceInfoForm" label-width="120px" :rules="addInvoiceInfoFormRules"
-               ref="addInvoiceInfoForm">
-        <el-form-item label="合同" prop="contractId">
-          <el-select v-model="addInvoiceInfoForm.contractId" filterable placeholder="请选择"
-                     v-on:change="contractChange(addInvoiceInfoForm.contractId, true)">
-            <el-option v-for="item in contractList" :key="item.contractId"
-                       :label="item.contractName" :value="item.contractId">
-            </el-option>
-          </el-select>
-        </el-form-item>
+                <el-form-item label="备注" prop="remark">
+                    <el-input type="textarea" v-model="addInvoiceInfoForm.remark" auto-complete="off" maxlength="30"
+                              show-word-limit></el-input>
+                </el-form-item>
 
-        <el-form-item label="发票内容" prop="invoiceContent">
-          <el-autocomplete class="inline-input" v-model="addInvoiceInfoForm.invoiceContent"
-                           :fetch-suggestions="invoiceContentFilter" placeholder="请输入内容">
-          </el-autocomplete>
-        </el-form-item>
+                <el-row :span="24">
+                    <el-col :span="12" v-for="(invoiceDetail, index) in addInvoiceInfoForm.invoiceDetailInfoList"
+                            :key="invoiceDetail.key">
+                        <el-form-item :label="invoiceDetail.subContractorName"
+                                      :prop="'invoiceDetailInfoList.' + index + '.subContractorDeductAmount'"
+                                      :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.subContractorDeductAmount">
+                            <el-input type="number" v-model.number="invoiceDetail.subContractorDeductAmount"
+                                      placeholder="请输入抵扣额分摊金额">
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
 
-        <el-form-item label="开票日期" prop="invoiceTime">
-          <el-date-picker v-model="addInvoiceInfoForm.invoiceTime" type="date">
-          </el-date-picker>
-        </el-form-item>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click.native="addInvoiceInfoFormVisible = false">取消</el-button>
+                <el-button type="primary" @click.native="addInvoiceInfoFormSubmit('addInvoiceInfoForm')">提交</el-button>
+            </div>
+        </el-dialog>
 
-        <el-form-item label="含税金额" prop="beforeTaxAmount">
-          <el-input type="number" step="0.01" v-model.number="addInvoiceInfoForm.beforeTaxAmount" auto-complete="off">
-          </el-input>
-        </el-form-item>
+        <el-dialog title="修改" :visible.sync="editInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
+            <el-form :model="editInvoiceInfoForm" label-width="100px" :rules="addInvoiceInfoFormRules"
+                     ref="editInvoiceInfoForm">
+                <el-form-item label="合同" prop="contractId">
+                    <el-select v-model="editInvoiceInfoForm.contractId" filterable placeholder="请选择"
+                               v-on:change="contractChange(editInvoiceInfoForm.contractId, true)">
+                        <el-option v-for="item in contractList" :key="item.contractId"
+                                   :label="item.contractName" :value="item.contractId">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
 
-        <el-form-item label="税点" prop="taxRate">
-          <el-input type="number" step="0.01" v-model.number="addInvoiceInfoForm.taxRate" auto-complete="off">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
+                <el-form-item label="发票内容" prop="invoiceContent">
+                    <el-autocomplete class="inline-input" v-model="editInvoiceInfoForm.invoiceContent"
+                                     :fetch-suggestions="invoiceContentFilter" placeholder="请输入内容">
+                    </el-autocomplete>
+                </el-form-item>
 
-        <el-form-item label="备注" prop="remark">
-          <el-input type="textarea" v-model="addInvoiceInfoForm.remark" auto-complete="off" maxlength="30"
-                    show-word-limit></el-input>
-        </el-form-item>
+                <el-form-item label="开票日期" prop="invoiceTime">
+                    <el-date-picker v-model="editInvoiceInfoForm.invoiceTime" type="date">
+                    </el-date-picker>
+                </el-form-item>
 
-        <el-row :span="24">
-          <el-col :span="12" v-for="(invoiceDetail, index) in addInvoiceInfoForm.invoiceDetailInfoList"
-                  :key="invoiceDetail.key">
-            <el-form-item :label="invoiceDetail.subContractorName"
-                          :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
-                          :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
-              <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
-                <template slot="append">%</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
+                <el-form-item label="含税金额" prop="beforeTaxAmount">
+                    <el-input type="number" step="0.01" v-model.number="editInvoiceInfoForm.beforeTaxAmount"
+                              auto-complete="off">
+                    </el-input>
+                </el-form-item>
 
-      <div slot="footer" class="dialog-footer">
-        <el-button @click.native="addInvoiceInfoFormVisible = false">取消</el-button>
-        <el-button type="primary" @click.native="addInvoiceInfoFormSubmit('addInvoiceInfoForm')">提交</el-button>
-      </div>
-    </el-dialog>
+                <el-form-item label="税点" prop="taxRate">
+                    <el-input type="number" step="0.01" v-model.number="editInvoiceInfoForm.taxRate"
+                              auto-complete="off">
+                        <template slot="append">%</template>
+                    </el-input>
+                </el-form-item>
 
-    <el-dialog title="修改" :visible.sync="editInvoiceInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="editInvoiceInfoForm" label-width="120px" :rules="addInvoiceInfoFormRules"
-               ref="editInvoiceInfoForm">
-        <el-form-item label="合同" prop="contractId">
-          <el-select v-model="editInvoiceInfoForm.contractId" filterable placeholder="请选择"
-                     v-on:change="contractChange(editInvoiceInfoForm.contractId, true)">
-            <el-option v-for="item in contractList" :key="item.contractId"
-                       :label="item.contractName" :value="item.contractId">
-            </el-option>
-          </el-select>
-        </el-form-item>
+                <el-form-item label="备注" prop="remark">
+                    <el-input type="textarea" v-model="editInvoiceInfoForm.remark" auto-complete="off" maxlength="30"
+                              show-word-limit></el-input>
+                </el-form-item>
 
-        <el-form-item label="发票内容" prop="invoiceContent">
-          <el-autocomplete class="inline-input" v-model="editInvoiceInfoForm.invoiceContent"
-                           :fetch-suggestions="invoiceContentFilter" placeholder="请输入内容">
-          </el-autocomplete>
-        </el-form-item>
+                <el-row :span="24">
+                    <el-col :span="12" v-for="(invoiceDetail, index) in editInvoiceInfoForm.invoiceDetailInfoList"
+                            :key="invoiceDetail.key">
+                        <el-form-item :label="invoiceDetail.subContractorName"
+                                      :prop="'invoiceDetailInfoList.' + index + '.subContractorDeductAmount'"
+                                      :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.subContractorDeductAmount">
+                            <el-input type="number" v-model.number="invoiceDetail.subContractorDeductAmount"
+                                      placeholder="请输入抵扣额分摊金额">
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
 
-        <el-form-item label="开票日期" prop="invoiceTime">
-          <el-date-picker v-model="editInvoiceInfoForm.invoiceTime" type="date">
-          </el-date-picker>
-        </el-form-item>
-
-        <el-form-item label="含税金额" prop="beforeTaxAmount">
-          <el-input type="number" step="0.01" v-model.number="editInvoiceInfoForm.beforeTaxAmount" auto-complete="off">
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="税点" prop="taxRate">
-          <el-input type="number" step="0.01" v-model.number="editInvoiceInfoForm.taxRate" auto-complete="off">
-            <template slot="append">%</template>
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="备注" prop="remark">
-          <el-input type="textarea" v-model="editInvoiceInfoForm.remark" auto-complete="off" maxlength="30"
-                    show-word-limit></el-input>
-        </el-form-item>
-
-        <el-row :span="24">
-          <el-col :span="12" v-for="(invoiceDetail, index) in editInvoiceInfoForm.invoiceDetailInfoList"
-                  :key="invoiceDetail.key">
-            <el-form-item :label="invoiceDetail.subContractorName"
-                          :prop="'invoiceDetailInfoList.' + index + '.shareRate'"
-                          :rules="addInvoiceInfoFormRules.invoiceDetailInfoList.shareRate">
-              <el-input type="number" step="0.01" v-model.number="invoiceDetail.shareRate" placeholder="请输入分摊比率">
-                <template slot="append">%</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-
-      <div slot="footer" class="dialog-footer">
-        <el-button @click.native="editInvoiceInfoFormVisible = false">取消</el-button>
-        <el-button type="primary" @click.native="editInvoiceInfoFormSubmit('editInvoiceInfoForm')">提交
-        </el-button>
-      </div>
-    </el-dialog>
-  </section>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click.native="editInvoiceInfoFormVisible = false">取消</el-button>
+                <el-button type="primary" @click.native="editInvoiceInfoFormSubmit('editInvoiceInfoForm')">提交
+                </el-button>
+            </div>
+        </el-dialog>
+    </section>
 </template>
 
 <script>
   export default {
     name: 'invoiceManage',
-    data () {
+    data() {
       let shareRateValidator = (rule, value, callback) => {
         if (value === null || value === undefined) {
           callback(new Error('请输入比率'))
@@ -236,8 +229,8 @@
           callback(new Error('金额不能小于0'))
           return
         }
-        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
-          callback(new Error('小数点后至多2位'))
+        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,6})?$').test(value)) {
+          callback(new Error('小数点后至多6位'))
           return
         }
         callback()
@@ -284,8 +277,7 @@
             {
               subContractorId: null,
               subContractorName: null,
-              shareRate: null,
-              shareAmount: null
+              subContractorDeductAmount: null,
             }
           ]
         },
@@ -310,21 +302,20 @@
             {required: true, message: '请填写含税款金额', trigger: 'change'},
             {validator: moneyValidator, trigger: 'change'}
           ],
-          shareRate: [
+          taxRate: [
             {required: true, message: '请填写税点', trigger: 'change'},
             {validator: shareRateValidator, trigger: 'change'}
           ],
-          shareAmount: [
-            {required: true, message: '请填写抵扣额', trigger: 'change'},
-            {validator: moneyValidator, trigger: 'change'}
-          ],
           invoiceDetailInfoList: {
-            shareRate: [{validator: shareRateValidator, trigger: 'change'}]
+            subContractorDeductAmount: [
+              {validator: moneyValidator, trigger: 'change'},
+              {required: true, message: '请填写分摊金额', trigger: 'change'},
+            ]
           }
         }
       }
     },
-    created () {
+    created() {
       this.getSubContractorList()
       this.getContractList()
       this.getInvoiceInfoList()
@@ -441,13 +432,19 @@
       contractChange: function (contractId, isAdd) {
         this.doRequest({
           method: 'post',
-          url: this.HOST + '/subContractor/getSubContractorWithShareRate',
-          data: {
-            contractId: contractId
-          }
+          url: this.HOST + '/subContractor/listAll'
         }).then(response => {
+          let subContractorList = []
+          response.result.forEach(subContractor => {
+            subContractorList.push({
+              subContractorId: subContractor.subContractorId,
+              subContractorName: subContractor.subContractorName,
+              subContractorDeductAmount: 0
+            })
+          });
+
           (isAdd ? this.addInvoiceInfoForm : this.editInvoiceInfoForm).invoiceDetailInfoList = [];
-          (isAdd ? this.addInvoiceInfoForm : this.editInvoiceInfoForm).invoiceDetailInfoList = response.result
+          (isAdd ? this.addInvoiceInfoForm : this.editInvoiceInfoForm).invoiceDetailInfoList = subContractorList
         })
       },
 
@@ -462,36 +459,37 @@
           })
         })
       },
-      invoiceContentFilter (queryString, cb) {
+      invoiceContentFilter(queryString, cb) {
         const invoiceContentSuggestList = this.invoiceContentSuggestList
         const results = queryString
-          ? invoiceContentSuggestList.filter(this.createFilter(queryString))
-          : invoiceContentSuggestList
+            ? invoiceContentSuggestList.filter(this.createFilter(queryString))
+            : invoiceContentSuggestList
         // 调用 callback 返回建议列表的数据
         cb(results)
       },
-      createFilter (queryString) {
+      createFilter(queryString) {
         return invoiceContentSuggestList => {
           return (invoiceContentSuggestList.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
         }
       },
-      getSummaries (param) {
+      getSummaries(param) {
         let sum = []
         sum[0] = '合计'
         sum[1] = null
         sum[2] = null
-        sum[3] = this.sumMap ? this.sumMap['beforeTaxAmount'] : null
-        sum[4] = null
-        sum[5] = this.sumMap ? this.sumMap['deductAmount'] : null
-        sum[6] = this.sumMap ? this.sumMap['subContractor1'] : null
-        sum[7] = this.sumMap ? this.sumMap['subContractor2'] : null
-        sum[8] = this.sumMap ? this.sumMap['subContractor3'] : null
-        sum[9] = this.sumMap ? this.sumMap['subContractor4'] : null
-        sum[10] = this.sumMap ? this.sumMap['subContractor5'] : null
-        sum[11] = this.sumMap ? this.sumMap['subContractor6'] : null
-        sum[12] = this.sumMap ? this.sumMap['subContractor7'] : null
-        sum[13] = null
+        sum[3] = null
+        sum[4] = this.sumMap ? this.sumMap['beforeTaxAmount'] : null
+        sum[5] = null
+        sum[6] = this.sumMap ? this.sumMap['deductAmount'] : null
+        sum[7] = this.sumMap ? this.sumMap['subContractor1'] : null
+        sum[8] = this.sumMap ? this.sumMap['subContractor2'] : null
+        sum[9] = this.sumMap ? this.sumMap['subContractor3'] : null
+        sum[10] = this.sumMap ? this.sumMap['subContractor4'] : null
+        sum[11] = this.sumMap ? this.sumMap['subContractor5'] : null
+        sum[12] = this.sumMap ? this.sumMap['subContractor6'] : null
+        sum[13] = this.sumMap ? this.sumMap['subContractor7'] : null
         sum[14] = null
+        sum[15] = null
         return sum
       }
     }

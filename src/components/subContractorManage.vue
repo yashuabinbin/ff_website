@@ -15,7 +15,7 @@
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="subContractorList" border="1px" style="width: 100%">
+      <el-table :data="subContractorList" border style="width: 100%">
         <el-table-column prop="subContractorId" label="id"></el-table-column>
         <el-table-column prop="subContractorName" label="分包名称"></el-table-column>
         <el-table-column prop="createTime" label="创建时间" >

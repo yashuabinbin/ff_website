@@ -23,14 +23,14 @@
 
     <el-col :span="24" class="toolbar">
       <!--列表-->
-      <el-table :data="contractList" border style="width: 100%">
-        <el-table-column prop="contractNum" label="合同号" width="100px"></el-table-column>
+      <el-table :data="contractList" border show-summary :summary-method="getSummaries" scope="scope" style="width: 100%">
+        <el-table-column prop="contractNum" label="合同号" width="120px"></el-table-column>
         <el-table-column prop="contractName" label="合同名称" width="180px"></el-table-column>
         <el-table-column prop="companyName" label="对方单位" width="200px"></el-table-column>
         <el-table-column prop="contractAmount" label="合同金额" width="170px"></el-table-column>
         <el-table-column prop="taxRate" label="税率" width="90px"></el-table-column>
 
-        <el-table-column label="分摊值" style="text-align:center">
+        <el-table-column label="分摊金额" style="text-align:center">
           <template v-for="(subContractor, index) in subContractorList">
             <el-table-column prop="subContractorList" :label="subContractor.subContractorName"
                              v-bind:key="subContractor.subContractorId" width="150px">
@@ -99,7 +99,7 @@
         <el-row :span="24" v-if="subContractorList !== undefined && subContractorList.length > 0">
           <el-col :span="12" v-for="(subContractor, index) in editContractForm.subContractorList"
                   :key="subContractor.subContractorId">
-            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊值'"
+            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊金额'"
                           :prop="'subContractorList.' + index + '.subContractorAmount'"
                           :rules="addContractFormRules.subContractorList.subContractorAmount"
                           label-width="150px">
@@ -155,7 +155,7 @@
         <el-row :span="24" v-if="subContractorList !== undefined && subContractorList.length > 0">
           <el-col :span="12" v-for="(subContractor, index) in addContractForm.subContractorList"
                   :key="subContractor.subContractorId">
-            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊值'"
+            <el-form-item :label="subContractorList[index].subContractorName + ' 分摊金额'"
                           :prop="'subContractorList.' + index + '.subContractorAmount'"
                           :rules="addContractFormRules.subContractorList.subContractorAmount"
                           label-width="150px">
@@ -198,6 +198,7 @@
 
       return {
         subContractorList: [],
+        sumMap: null,
 
         contractList: [],
         contractSearchReq: {
@@ -293,6 +294,7 @@
         }).then(response => {
           this.contractList = response.result.list
           this.total = response.result.total
+          this.sumMap = response.result.sumMap
         })
       },
       searchList: function () {
@@ -391,6 +393,23 @@
           this.subContractorList = response.result
           console.info(this.subContractorList)
         })
+      },
+
+      getSummaries(param) {
+        let sum = []
+        sum[0] = '合计'
+        sum[1] = null
+        sum[2] = null
+        sum[3] = this.sumMap ? this.sumMap['contractAmount'] : null
+        sum[4] = null
+        sum[5] = this.sumMap ? this.sumMap['subContractor1'] : null
+        sum[6] = this.sumMap ? this.sumMap['subContractor2'] : null
+        sum[7] = this.sumMap ? this.sumMap['subContractor3'] : null
+        sum[8] = this.sumMap ? this.sumMap['subContractor4'] : null
+        sum[9] = this.sumMap ? this.sumMap['subContractor5'] : null
+        sum[10] = this.sumMap ? this.sumMap['subContractor6'] : null
+        sum[11] = this.sumMap ? this.sumMap['subContractor7'] : null
+        return sum
       }
     }
   }

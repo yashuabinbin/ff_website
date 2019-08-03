@@ -1,284 +1,251 @@
 <template>
-  <section class="main_inner">
-    <!--工具条-->
-    <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
-      <el-form :inline="true">
-        <el-col :span="4">
-          <el-form-item>
-            <el-input placeholder="合同号" v-model="payInfoSearchReq.contractNum" clearable></el-input>
-          </el-form-item>
+    <section class="main_inner">
+        <!--工具条-->
+        <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+            <el-form :inline="true">
+                <el-col :span="4">
+                    <el-form-item>
+                        <el-input placeholder="合同号" v-model="payInfoSearchReq.contractNum" clearable></el-input>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="4">
+                    <el-form-item>
+                        <el-input placeholder="收款单位" v-model="payInfoSearchReq.payee" clearable></el-input>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="3">
+                    <el-form-item>
+                        <el-select v-model="payInfoSearchReq.payType" filterable placeholder="请选择" clearable>
+                            <el-option key="SUB_CONTRACTOR" label="分包" value="SUB_CONTRACTOR"></el-option>
+                            <el-option key="MIGRANT_WORKER" label="农民工" value="MIGRANT_WORKER"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="7">
+                    <el-form-item>
+                        <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payStartTime"
+                                        placeholder="付款开始日期">
+                        </el-date-picker>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payEndTime"
+                                        placeholder="付款结束日期">
+                        </el-date-picker>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="3">
+                    <el-form-item>
+                        <el-button type="primary" @click="searchList()">查询</el-button>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary" @click="handleAdd()">新增</el-button>
+                    </el-form-item>
+                </el-col>
+            </el-form>
         </el-col>
 
-        <el-col :span="4">
-          <el-form-item>
-            <el-input placeholder="收款单位" v-model="payInfoSearchReq.payee" clearable></el-input>
-          </el-form-item>
+        <el-col :span="24" class="toolbar">
+            <!--列表-->
+            <el-table :data="payInfoList" show-summary :summary-method="getSummaries" scope="scope" border
+                      style="width: 100%">
+                <el-table-column label="合同号" prop="contractNum" width="120"></el-table-column>
+                <el-table-column label="合同名称" prop="contractName" width="150"></el-table-column>
+                <el-table-column label="收款单位" prop="payee" width="200"></el-table-column>
+                <el-table-column label="金额" prop="payAmount" width="100"></el-table-column>
+                <el-table-column label="扣履约金" prop="performanceBoundAmount" width="100"></el-table-column>
+                <el-table-column label="付款类型">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.payType == 'SUB_CONTRACTOR' ? '分包' : '农民工'}}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="分摊金额" style="text-align:center">
+                    <template v-for="(subContractor, index) in subContractorList">
+                        <el-table-column prop="subContractorList" :label="subContractor.subContractorName"
+                                         v-bind:key="subContractor.subContractorId" width="150px">
+                            <template slot-scope="scope">
+                                {{ scope.row.payDetailInfoList[index].subContractorAmount }}
+                            </template>
+                        </el-table-column>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="付款日期" prop="payTime" width="200px">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.payTime | dateFilter }}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="备注" prop="remark" width="150"></el-table-column>
+
+                <el-table-column label="操作" fixed="right" width="160px">
+                    <template slot-scope="scope">
+                        <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button type="danger" size="small" @click="handleDel(scope.row.payId)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </el-col>
 
-        <el-col :span="3">
-          <el-form-item>
-            <el-select v-model="payInfoSearchReq.subContractorId" placeholder="请选择分包" clearable>
-              <el-option v-for="item in subContractorList"
-                         :key="item.subContractorId"
-                         :label="item.subContractorName"
-                         :value="item.subContractorId">
-              </el-option>
-            </el-select>
-          </el-form-item>
+        <!--工具条-->
+        <el-col :span="24" class="toolbar">
+            <el-pagination layout="prev, pager, next" @current-change="pageChange" style="float:right;"
+                           :page-size="payInfoSearchReq.pageSize" :total="total">
+            </el-pagination>
         </el-col>
 
-        <el-col :span="3">
-          <el-form-item>
-            <el-select v-model="payInfoSearchReq.payType" filterable placeholder="请选择" clearable>
-              <el-option key="SUB_CONTRACTOR" label="分包" value="SUB_CONTRACTOR"></el-option>
-              <el-option key="MIGRANT_WORKER" label="农民工" value="MIGRANT_WORKER"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
+        <el-dialog title="新增" :visible.sync="addPayInfoFormVisible" :close-on-click-modal="false" width="700px">
+            <el-form :model="addPayInfoForm" label-width="120px" :rules="addPayInfoFormRules" ref="addPayInfoForm">
+                <el-form-item label="合同" prop="contractId">
+                    <el-select v-model="addPayInfoForm.contractId" filterable
+                               placeholder="请选择" style="float:left"
+                               v-on:change="contractChange(addPayInfoForm.contractId, true)">
+                        <el-option v-for="item in contractList" :key="item.contractId" :label="item.contractName"
+                                   :value="item.contractId">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
 
-        <el-col :span="7">
-          <el-form-item>
-            <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payStartTime"
-                            placeholder="付款开始日期">
-            </el-date-picker>
-          </el-form-item>
+                <el-form-item label="付款对象" prop="payType" label-position="left">
+                    <el-radio-group v-model="addPayInfoForm.payType">
+                        <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
+                        <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
+                    </el-radio-group>
+                </el-form-item>
 
-          <el-form-item>
-            <el-date-picker type="date" style="width: 150px;" v-model="payInfoSearchReq.payEndTime"
-                            placeholder="付款结束日期">
-            </el-date-picker>
-          </el-form-item>
-        </el-col>
+                <el-form-item label="收款单位" prop="payee">
+                    <el-autocomplete v-model="addPayInfoForm.payee"
+                                     :fetch-suggestions="payeeFilter" placeholder="请输入内容">
+                    </el-autocomplete>
+                </el-form-item>
 
-        <el-col :span="3">
-          <el-form-item>
-            <el-button type="primary" @click="searchList()">查询</el-button>
-          </el-form-item>
+                <el-form-item label="金额" prop="payAmount">
+                    <el-input type="number" v-model.number="addPayInfoForm.payAmount" auto-complete="off">
+                    </el-input>
+                </el-form-item>
 
-          <el-form-item>
-            <el-button type="primary" @click="handleAdd()">新增</el-button>
-          </el-form-item>
-        </el-col>
-      </el-form>
-    </el-col>
+                <el-form-item label="扣履约金" prop="performanceBoundAmount">
+                    <el-input type="number" v-model.number="addPayInfoForm.performanceBoundAmount"
+                              auto-complete="off">
+                    </el-input>
+                </el-form-item>
 
-    <el-col :span="24" class="toolbar">
-      <!--列表-->
-      <el-table :data="payInfoList" show-summary :summary-method="getSummaries" scope="scope" border style="width: 100%">
-        <el-table-column label="合同号" prop="contractNum" width="150">
-        </el-table-column>
+                <el-form-item label="付款日期" prop="payTime">
+                    <el-date-picker v-model="addPayInfoForm.payTime" type="date" style="float:left">
+                    </el-date-picker>
+                </el-form-item>
 
-        <el-table-column label="收款单位" prop="payee" width="200"></el-table-column>
+                <el-form-item label="备注" prop="remark">
+                    <el-input type="textarea" v-model="addPayInfoForm.remark" auto-complete="off" maxlength="30"
+                              show-word-limit>
+                    </el-input>
+                </el-form-item>
 
-        <el-table-column label="金额" prop="payAmount" width="100">
-        </el-table-column>
+                <el-row :span="24">
+                    <el-col :span="12" v-for="(payDetail, index) in addPayInfoForm.payDetailInfoList"
+                            :key="payDetail.payDetailId">
+                        <el-form-item :label="payDetail.subContractorName"
+                                      :prop="'payDetailInfoList.' + index + '.subContractorAmount'"
+                                      :rules="addPayInfoFormRules.payDetailInfoList.subContractorAmount">
+                            <el-input type="number" v-model.number="payDetail.subContractorAmount"
+                                      placeholder="请输入分摊金额">
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
 
-        <el-table-column label="扣履约金" prop="performanceBoundAmount" width="100">
-        </el-table-column>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click.native="addPayInfoFormVisible = false">取消</el-button>
+                <el-button type="primary" @click.native="addPayInfoFormSubmit('addPayInfoForm')">提交</el-button>
+            </div>
+        </el-dialog>
 
-        <el-table-column label="付款类型">
-          <template slot-scope="scope">
-            <span>{{scope.row.payType == 'SUB_CONTRACTOR' ? '分包' : '农民工'}}</span>
-          </template>
-        </el-table-column>
+        <el-dialog title="修改" :visible.sync="editPayInfoFormVisible" :close-on-click-modal="false" width="700px">
+            <el-form :model="editPayInfoForm" label-width="120px" :rules="addPayInfoFormRules"
+                     ref="editPayInfoForm">
+                <el-form-item label="合同" prop="contractId">
+                    <el-select v-model="editPayInfoForm.contractId" filterable placeholder="请选择" style="float:left"
+                               v-on:change="contractChange(editPayInfoForm.contractId, true)">
+                        <el-option v-for="item in contractList" :key="item.contractId" :label="item.contractName"
+                                   :value="item.contractId">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
 
-        <el-table-column label="备注" prop="remark" width="150"></el-table-column>
+                <el-form-item label="付款对象" prop="payType" label-position="left">
+                    <el-radio-group v-model="editPayInfoForm.payType">
+                        <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
+                        <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
+                    </el-radio-group>
+                </el-form-item>
 
-        <template v-for="(subContractor, index) in subContractorList">
-          <el-table-column prop="payDetailInfoList" :label="subContractor.subContractorName"
-                           v-bind:key="subContractor.subContractorId" width="200px">
-            <template slot-scope="scope">
-              分摊比率: {{ scope.row.payDetailInfoList[index].shareRate }}%
-              <br/>
-              分摊金额: {{ scope.row.payDetailInfoList[index].shareAmount }}
-            </template>
-          </el-table-column>
-        </template>
+                <el-form-item label="收款单位" prop="payee">
+                    <el-autocomplete class="inline-input" v-model="editPayInfoForm.payee"
+                                     :fetch-suggestions="payeeFilter"
+                                     placeholder="请输入内容">
+                    </el-autocomplete>
+                </el-form-item>
 
-        <el-table-column label="付款日期" prop="payTime" width="200px">
-          <template slot-scope="scope">
-            <span>{{ scope.row.payTime | dateFilter }}</span>
-          </template>
-        </el-table-column>
+                <el-form-item label="金额" prop="payAmount">
+                    <el-input type="number" v-model.number="editPayInfoForm.payAmount"
+                              auto-complete="off">
+                    </el-input>
+                </el-form-item>
 
-        <el-table-column label="操作" fixed="right" width="160px">
-          <template slot-scope="scope">
-            <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDel(scope.row.payId)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-col>
+                <el-form-item label="扣履约金" prop="performanceBoundAmount">
+                    <el-input type="number" v-model.number="editPayInfoForm.performanceBoundAmount"
+                              auto-complete="off"></el-input>
+                </el-form-item>
 
-    <!--工具条-->
-    <el-col :span="24" class="toolbar">
-      <el-pagination layout="prev, pager, next" @current-change="pageChange" style="float:right;"
-                     :page-size="payInfoSearchReq.pageSize" :total="total">
-      </el-pagination>
-    </el-col>
+                <el-form-item label="付款日期" prop="payTime">
+                    <el-date-picker v-model="editPayInfoForm.payTime" type="date" style="float:left">
+                    </el-date-picker>
+                </el-form-item>
 
-    <el-dialog title="新增" :visible.sync="addPayInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="addPayInfoForm" label-width="120px" :rules="addPayInfoFormRules" ref="addPayInfoForm">
-        <el-form-item label="合同" prop="contractId">
-          <el-select v-model="addPayInfoForm.contractId" filterable
-                     placeholder="请选择" style="float:left"
-                     v-on:change="contractChange(addPayInfoForm.contractId, true)">
-            <el-option v-for="item in contractList" :key="item.contractId" :label="item.contractName"
-                       :value="item.contractId">
-            </el-option>
-          </el-select>
-        </el-form-item>
+                <el-form-item label="备注" prop="remark">
+                    <el-input type="textarea" v-model="editPayInfoForm.remark" auto-complete="off"
+                              maxlength="30" show-word-limit></el-input>
+                </el-form-item>
 
-        <el-form-item label="付款对象" prop="payType" label-position="left">
-          <el-radio-group v-model="addPayInfoForm.payType">
-            <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
-            <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="收款单位" prop="payee">
-          <el-autocomplete v-model="addPayInfoForm.payee"
-                           :fetch-suggestions="payeeFilter" placeholder="请输入内容">
-          </el-autocomplete>
-        </el-form-item>
-
-        <el-form-item label="金额" prop="payAmount">
-          <el-input type="number" step="0.01" v-model.number="addPayInfoForm.payAmount" auto-complete="off">
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="扣履约金" prop="performanceBoundAmount">
-          <el-input type="number" step="0.01" v-model.number="addPayInfoForm.performanceBoundAmount"
-                    auto-complete="off">
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="付款日期" prop="payTime">
-          <el-date-picker v-model="addPayInfoForm.payTime" type="date" style="float:left">
-          </el-date-picker>
-        </el-form-item>
-
-        <el-form-item label="备注" prop="remark">
-          <el-input type="textarea" v-model="addPayInfoForm.remark" auto-complete="off" maxlength="30"
-                    show-word-limit>
-          </el-input>
-        </el-form-item>
-
-        <el-row :span="24">
-          <el-col :span="12" v-for="(payDetail, index) in addPayInfoForm.payDetailInfoList"
-                  :key="payDetail.payDetailId">
-            <el-form-item :label="payDetail.subContractorName"
-                          :prop="'payDetailInfoList.' + index + '.shareRate'"
-                          :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
-              <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
-                <template slot="append">%</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-
-      <div slot="footer" class="dialog-footer">
-        <el-button @click.native="addPayInfoFormVisible = false">取消</el-button>
-        <el-button type="primary" @click.native="addPayInfoFormSubmit('addPayInfoForm')">提交</el-button>
-      </div>
-    </el-dialog>
-
-    <el-dialog title="修改" :visible.sync="editPayInfoFormVisible" :close-on-click-modal="false" width="700px">
-      <el-form :model="editPayInfoForm" label-width="120px" :rules="addPayInfoFormRules"
-               ref="editPayInfoForm">
-        <el-form-item label="合同" prop="contractId">
-          <el-select v-model="editPayInfoForm.contractId" filterable placeholder="请选择" style="float:left"
-                     v-on:change="contractChange(editPayInfoForm.contractId, true)">
-            <el-option v-for="item in contractList" :key="item.contractId" :label="item.contractName"
-                       :value="item.contractId">
-            </el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="付款对象" prop="payType" label-position="left">
-          <el-radio-group v-model="editPayInfoForm.payType">
-            <el-radio label="SUB_CONTRACTOR" border>分包</el-radio>
-            <el-radio label="MIGRANT_WORKER" border>农民工</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="收款单位" prop="payee">
-          <el-autocomplete class="inline-input" v-model="editPayInfoForm.payee" :fetch-suggestions="payeeFilter"
-                           placeholder="请输入内容">
-          </el-autocomplete>
-        </el-form-item>
-
-        <el-form-item label="金额" prop="payAmount">
-          <el-input type="number" step="0.01" v-model.number="editPayInfoForm.payAmount"
-                    auto-complete="off">
-          </el-input>
-        </el-form-item>
-
-        <el-form-item label="扣履约金" prop="performanceBoundAmount">
-          <el-input type="number" step="0.01" v-model.number="editPayInfoForm.performanceBoundAmount"
-                    auto-complete="off"></el-input>
-        </el-form-item>
-
-        <el-form-item label="付款日期" prop="payTime">
-          <el-date-picker v-model="editPayInfoForm.payTime" type="date" style="float:left">
-          </el-date-picker>
-        </el-form-item>
-
-        <el-form-item label="备注" prop="remark">
-          <el-input type="textarea" v-model="editPayInfoForm.remark" auto-complete="off"
-                    maxlength="30" show-word-limit></el-input>
-        </el-form-item>
-
-        <el-row :span="24">
-          <el-col :span="12" v-for="(payDetail, index) in editPayInfoForm.payDetailInfoList"
-                  :key="payDetail.payDetailId">
-            <el-form-item :label="payDetail.subContractorName"
-                          :prop="'payDetailInfoList.' + index + '.shareRate'"
-                          :rules="addPayInfoFormRules.payDetailInfoList.shareRate">
-              <el-input type="number" step="0.01" v-model.number="payDetail.shareRate" placeholder="请输入分摊比率">
-                <template slot="append">%</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click.native="editPayInfoFormVisible = false">取消</el-button>
-        <el-button type="primary" @click.native="editPayInfoFormSubmit('editPayInfoForm')">提交</el-button>
-      </div>
-    </el-dialog>
-  </section>
+                <el-row :span="24">
+                    <el-col :span="12" v-for="(payDetail, index) in editPayInfoForm.payDetailInfoList"
+                            :key="payDetail.payDetailId">
+                        <el-form-item :label="payDetail.subContractorName"
+                                      :prop="'payDetailInfoList.' + index + '.subContractorAmount'"
+                                      :rules="addPayInfoFormRules.payDetailInfoList.subContractorAmount">
+                            <el-input type="number" v-model.number="payDetail.subContractorAmount"
+                                      placeholder="请输入分摊金额">
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click.native="editPayInfoFormVisible = false">取消</el-button>
+                <el-button type="primary" @click.native="editPayInfoFormSubmit('editPayInfoForm')">提交</el-button>
+            </div>
+        </el-dialog>
+    </section>
 </template>
 
 <script>
   export default {
     name: 'payInfoManage',
-    data () {
-      let shareRateValidator = (rule, value, callback) => {
-        if (!value) {
-          callback(new Error('请输入分摊比率'))
-          return
-        }
-        if (value < 0 || value > 100) {
-          callback(new Error('数值范围0-100，小数点后至多2位'))
-          return
-        }
-
-        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
-          callback(new Error('数值范围0-100，小数点后至多2位'))
-          return
-        }
-        callback()
-      }
-
+    data() {
       let moneyValidator = (rule, value, callback) => {
         if (value < 0) {
           callback(new Error('金额不能小于0'))
           return
         }
-        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$').test(value)) {
-          callback(new Error('小数点后至多2位'))
+        if (!new RegExp('^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,6})?$').test(value)) {
+          callback(new Error('小数点后至多6位'))
           return
         }
         callback()
@@ -330,8 +297,7 @@
             {
               subContractorId: null,
               subContractorName: null,
-              shareRate: null,
-              shareAmount: null
+              subContractorAmount: null
             }
           ]
         },
@@ -364,12 +330,15 @@
             {validator: moneyValidator, trigger: 'change'}
           ],
           payDetailInfoList: {
-            taxRate: [{validator: shareRateValidator, trigger: 'change'}]
+            subContractorAmount: [
+              {required: true, message: '请填写分摊金额', trigger: 'change'},
+              {validator: moneyValidator, trigger: 'change'}
+            ],
           }
         }
       }
     },
-    created () {
+    created() {
       this.getSubContractorList()
       this.getContractList()
       this.getPayInfoList()
@@ -484,13 +453,19 @@
       contractChange: function (contractId, isAdd) {
         this.doRequest({
           method: 'post',
-          url: this.HOST + '/subContractor/getSubContractorWithShareRate',
-          data: {
-            contractId: contractId
-          }
+          url: this.HOST + '/subContractor/listAll'
         }).then(response => {
+          let subContractorList = []
+          response.result.forEach(subContractor => {
+            subContractorList.push({
+              subContractorId: subContractor.subContractorId,
+              subContractorName: subContractor.subContractorName,
+              subContractorAmount: 0
+            })
+          });
+
           (isAdd ? this.addPayInfoForm : this.editPayInfoForm).payDetailInfoList = [];
-          (isAdd ? this.addPayInfoForm : this.editPayInfoForm).payDetailInfoList = response.result
+          (isAdd ? this.addPayInfoForm : this.editPayInfoForm).payDetailInfoList = subContractorList
         })
       },
       getPayeeSuggest: function () {
@@ -504,24 +479,24 @@
           })
         })
       },
-      payeeFilter (queryString, cb) {
+      payeeFilter(queryString, cb) {
         const payeeSuggestList = this.payeeSuggestList
         const results = queryString ? payeeSuggestList.filter(this.createFilter(queryString)) : payeeSuggestList
         // 调用 callback 返回建议列表的数据
         cb(results)
       },
-      createFilter (queryString) {
+      createFilter(queryString) {
         return payeeSuggestList => {
           return (payeeSuggestList.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
         }
       },
-      getSummaries (param) {
+      getSummaries(param) {
         let sum = []
         sum[0] = '合计'
         sum[1] = null
-        sum[2] = this.sumMap ? this.sumMap['shareAmount'] : null
-        sum[3] = this.sumMap ? this.sumMap['performanceBoundAmount'] : null
-        sum[4] = null
+        sum[2] = null
+        sum[3] = this.sumMap ? this.sumMap['payAmount'] : null
+        sum[4] = this.sumMap ? this.sumMap['performanceBoundAmount'] : null
         sum[5] = null
         sum[6] = this.sumMap ? this.sumMap['subContractor1'] : null
         sum[7] = this.sumMap ? this.sumMap['subContractor2'] : null
@@ -530,7 +505,6 @@
         sum[10] = this.sumMap ? this.sumMap['subContractor5'] : null
         sum[11] = this.sumMap ? this.sumMap['subContractor6'] : null
         sum[12] = this.sumMap ? this.sumMap['subContractor7'] : null
-        sum[13] = null
         return sum
       }
     }
