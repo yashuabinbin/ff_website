@@ -38,7 +38,7 @@
                     </el-form-item>
                 </el-col>
 
-                <el-col :span="3">
+                <el-col :span="4">
                     <el-form-item>
                         <el-button type="primary" @click="searchList()">查询</el-button>
                     </el-form-item>
